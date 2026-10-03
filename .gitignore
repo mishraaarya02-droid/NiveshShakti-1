@@ -1,0 +1,23 @@
+# General
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.log
+*.sqlite3
+*.db
+.env
+
+# Node
+node_modules/
+dist/
+build/
+
+# Docker
+*.pid
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
