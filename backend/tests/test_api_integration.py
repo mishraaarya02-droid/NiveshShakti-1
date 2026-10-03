@@ -171,6 +171,7 @@ def test_url_analysis_and_ssrf_rejection():
     res_valid = client.post("/analysis/url", json={"url": "https://investor.sebi.gov.in"}, headers=headers)
     assert res_valid.status_code == 201
     assert res_valid.json()["status"] == "COMPLETED"
+    assert "destination page not fetched" in res_valid.json()["extracted_text"]
 
 def test_sources_health_endpoint():
     res = client.get("/analysis/sources/health")

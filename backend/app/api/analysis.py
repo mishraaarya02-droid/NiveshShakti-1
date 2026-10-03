@@ -9,6 +9,8 @@ Endpoints:
 - GET /analysis/user/history
 - GET /analysis/sources/health
 """
+from __future__ import annotations
+
 import asyncio
 import ipaddress
 import re
@@ -154,7 +156,7 @@ async def analyze_url_content(
     # Analyze URL text representation
     completed_analysis = await run_analysis_pipeline(
         analysis_id=analysis.id,
-        text=f"Financial Investment URL Domain check: {req.url}",
+        text=f"Submitted financial URL (destination page not fetched): {req.url}",
         db=db
     )
 

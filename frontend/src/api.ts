@@ -19,6 +19,32 @@ import type { UserProfile, AnalysisDetail, AnalysisSummary, SourceHealth, Grieva
 
 const API_BASE = '';
 
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+async function readErrorMessage(res: Response, fallback: string): Promise<string> {
+  try {
+    const error: { detail?: unknown } = await res.json();
+    if (typeof error.detail === 'string') return error.detail;
+    if (Array.isArray(error.detail)) {
+      return error.detail
+        .map((item) => typeof item === 'object' && item !== null && 'msg' in item ? String(item.msg) : '')
+        .filter(Boolean)
+        .join('; ') || fallback;
+    }
+  } catch {
+    // Some proxies and server errors return an empty or non-JSON body.
+  }
+  return fallback;
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = api.getToken();
   const headers: Record<string, string> = {};
@@ -34,12 +60,20 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+  } catch {
+    throw new ApiError('Unable to reach the backend. Check that the API is running and try again.', 0);
+  }
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || 'API request failed');
+    const fallback = res.status >= 500
+      ? `The backend returned HTTP ${res.status}. Check that the API is running and try again.`
+      : res.statusText || 'API request failed';
+    throw new ApiError(await readErrorMessage(res, fallback), res.status);
   }
+  if (res.status === 204) return undefined as T;
   return res.json();
 }
 
@@ -50,14 +84,21 @@ async function uploadFile<T>(endpoint: string, file: File): Promise<T> {
   const headers: Record<string, string> = {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    method: 'POST',
-    headers,
-    body: formData,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${endpoint}`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+  } catch {
+    throw new ApiError('Unable to reach the backend. Check that the API is running and try again.', 0);
+  }
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || 'Upload failed');
+    const fallback = res.status >= 500
+      ? `The backend returned HTTP ${res.status}. Check that the API is running and try again.`
+      : res.statusText || 'Upload failed';
+    throw new ApiError(await readErrorMessage(res, fallback), res.status);
   }
   return res.json();
 }

@@ -108,6 +108,11 @@ export const ResultCard: React.FC<ResultCardProps> = ({ analysis, language, know
       </div>
 
       <div className="p-6 space-y-6">
+        {analysis.input_type === 'url' && (
+          <p role="note" className="rounded-lg border border-amber-700/50 bg-amber-950/20 p-3 text-xs leading-relaxed text-amber-100">
+            {copy.urlAnalysisLimit}
+          </p>
+        )}
         {isFailure ? (
           <div role="alert" className="space-y-3 rounded-lg border border-amber-700/50 bg-amber-950/20 p-4 text-sm text-amber-100">
             <h4 className="font-semibold">{analysis.extraction_status === 'PROVIDER_UNAVAILABLE' ? copy.providerUnavailable : copy.processingError}</h4>

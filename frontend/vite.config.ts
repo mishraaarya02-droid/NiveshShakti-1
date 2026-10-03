@@ -5,7 +5,7 @@ import { defineConfig, loadEnv } from 'vite'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_')
-  const backendTarget = env.VITE_BACKEND_PROXY_TARGET || 'http://localhost:8001'
+  const backendTarget = env.VITE_BACKEND_PROXY_TARGET || 'http://localhost:8000'
 
   return {
     plugins: [

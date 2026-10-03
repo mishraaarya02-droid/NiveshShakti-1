@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { api, type UserProfile, type AnalysisDetail, type AnalysisSummary, type SourceHealth } from './api';
+import { api, ApiError, type UserProfile, type AnalysisDetail, type AnalysisSummary, type SourceHealth } from './api';
 import { AuthModal } from './components/AuthModal';
 import { ResultCard } from './components/ResultCard';
 import {
@@ -53,7 +53,14 @@ export function App() {
           setLanguage(profile.language);
           setKnowledgeLevel(profile.knowledge_level);
         })
-        .catch(() => api.clearToken());
+        .catch((error: unknown) => {
+          if (error instanceof ApiError && error.status === 401) {
+            api.clearToken();
+            setErrorMessage('Your session has expired. Sign in again to continue.');
+            return;
+          }
+          setErrorMessage(error instanceof Error ? error.message : 'Could not restore your session.');
+        });
     }
     // Fetch source health
     api.getSourceHealth()
@@ -65,8 +72,8 @@ export function App() {
     try {
       const items = await api.getHistory();
       setHistory(items);
-    } catch {
-      // Ignored
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Could not load your saved checks.');
     }
   };
 
@@ -78,7 +85,11 @@ export function App() {
         .then((items) => {
           if (isMounted) setHistory(items);
         })
-        .catch(() => {});
+        .catch((error: unknown) => {
+          if (isMounted) {
+            setErrorMessage(error instanceof Error ? error.message : 'Could not load your saved checks.');
+          }
+        });
     }
     return () => {
       isMounted = false;

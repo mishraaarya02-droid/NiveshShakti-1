@@ -142,7 +142,13 @@ def transcribe_audio(
         return SpeechResult(status="SUCCESS", text=transcript, message="Transcription completed successfully.")
 
     except RuntimeError as exc:
-        if "dependencies are not installed" in str(exc) or "FFmpeg is not installed" in str(exc):
+        if "FFmpeg is not installed" in str(exc):
+            return SpeechResult(
+                status="PROVIDER_UNAVAILABLE",
+                text=None,
+                message="Audio transcription is unavailable because FFmpeg is not installed.",
+            )
+        if "dependencies are not installed" in str(exc):
             return SpeechResult(
                 status="PROVIDER_UNAVAILABLE",
                 text=None,

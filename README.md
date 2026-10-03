@@ -33,13 +33,26 @@ NiveshShakti/
 ## Development
 1. Install Python 3.11+, Node.js 22+, and (for local multimodal use) Tesseract with English/Hindi data plus FFmpeg. Whisper also requires PyTorch; model weights are downloaded by Whisper when first used.
 2. Install dependencies:
-   ```powershell
-   python -m venv .venv
-   .\.venv\Scripts\Activate.ps1
+   ```sh
+   python3 -m venv .venv
+   source .venv/bin/activate
    pip install -r backend/requirements.txt
    npm --prefix frontend ci
    ```
-3. For Docker, install Docker Desktop and set url-safe secrets in PowerShell before starting services:
+   On Windows, activate the virtual environment with `.\.venv\Scripts\Activate.ps1`.
+   To run the backend test suite, install `backend/requirements-dev.txt` instead of `backend/requirements.txt`.
+3. Start the local SQLite backend from `backend/`. A fresh database must be migrated before the first request:
+   ```sh
+   cd backend
+   alembic upgrade head
+   uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+   ```
+   In a second terminal, start the frontend from the repository root:
+   ```sh
+   npm --prefix frontend run dev
+   ```
+   Vite proxies API requests to `http://localhost:8000` by default; set `VITE_BACKEND_PROXY_TARGET` to override it. Backend settings load an optional `.env` file from the backend's current working directory and can also be set through environment variables. Set a private `JWT_SECRET_KEY` in `backend/.env` to keep local login tokens valid across backend restarts; without it, a fresh development key is generated at each startup. Never commit `.env`.
+4. For Docker, install Docker Desktop and set url-safe secrets in PowerShell before starting services:
    ```powershell
    $env:POSTGRES_PASSWORD = python -c "import secrets; print(secrets.token_hex(24))"
    $env:JWT_SECRET_KEY = python -c "import secrets; print(secrets.token_urlsafe(48))"
@@ -47,7 +60,6 @@ NiveshShakti/
    docker compose up --build
    ```
    Compose runs Alembic migrations after PostgreSQL becomes healthy. The frontend is at `http://localhost:5173`; the API is at `http://localhost:8000`.
-4. Local backend development may use the configured SQLite fallback when PostgreSQL is unavailable. Set `DATABASE_URL` to PostgreSQL for deployment and run `alembic upgrade head` from `backend/`.
 5. Run checks:
    ```powershell
    $env:PYTHONPATH = "backend"
@@ -56,7 +68,7 @@ NiveshShakti/
    npm --prefix frontend run build
    ```
 
-Automated claim lookup is intentionally unavailable unless an official source exposes a documented query interface. Source reachability is not evidence about a claim; use the linked official manual route.
+Automated claim lookup is intentionally unavailable unless an official source exposes a documented query interface. URL analysis checks only the submitted URL text and does not fetch the destination page or verify domain ownership, reputation, or safety. Source reachability is not evidence about a claim; use the linked official manual route.
 
 ## License
 MIT – see `LICENSE` for details.

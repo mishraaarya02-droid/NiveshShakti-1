@@ -193,6 +193,15 @@ def test_audio_provider_unavailable_and_provider_failure_are_explicit(monkeypatc
     assert unavailable["status"] == "PROVIDER_UNAVAILABLE"
     assert unavailable["text"] is None
 
+    monkeypatch.setattr(
+        speech.WhisperSpeechProvider,
+        "transcribe",
+        lambda self, audio_path: (_ for _ in ()).throw(RuntimeError("FFmpeg is not installed")),
+    )
+    missing_ffmpeg = speech.transcribe_audio(make_wav(), "audio/wav", "voice.wav")
+    assert missing_ffmpeg["status"] == "PROVIDER_UNAVAILABLE"
+    assert "FFmpeg is not installed" in missing_ffmpeg["message"]
+
     failed = speech.transcribe_audio(
         make_wav(),
         "audio/wav",

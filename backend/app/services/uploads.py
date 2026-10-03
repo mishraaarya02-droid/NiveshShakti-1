@@ -1,4 +1,6 @@
 """Shared validation and bounded reads for untrusted multipart uploads."""
+from __future__ import annotations
+
 from pathlib import PurePosixPath
 from typing import Mapping, Set
 
